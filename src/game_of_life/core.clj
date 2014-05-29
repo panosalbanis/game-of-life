@@ -24,3 +24,24 @@
       (subvec lst
               (min (max (+ i (dec step)) (+ line-start step)) size)
               (min (+ i (inc (inc step))) (+ line-end (inc step)) size)))))
+
+(defn alive? [x]
+  (if (= x "*")
+    true
+    false))
+
+(defn decide [cell cnt]
+  (cond
+    (and (alive? cell) (< cnt 2)) "."
+    (and (alive? cell) (> cnt 3)) "."
+    (and (not (alive? cell)) (= cnt 3)) "*"
+    :else cell))
+
+(defn itrate [lst]
+  (loop [x [] l lst cnt 0]
+    (if (empty? l)
+      x
+      (recur
+        (conj x (decide (first l) (count (filter alive? (neighbours cnt lst)))))
+        (rest l)
+        (inc cnt)))))
