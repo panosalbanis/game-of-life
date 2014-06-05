@@ -2,42 +2,82 @@
   (:require [clojure.test :refer :all]
             [game-of-life.core :refer :all]))
 
-(deftest neighbours-middle-test
-  (testing "A cell not in the edge should return 8 items"
-    (is (= [0 1 2 3 5 6 7 8] (neighbours 4 [0 1 2 3 4 5 6 7 8])))))
+(deftest alive-alive?-test
+  (testing "An alive cell should return true"
+    (is (= true (alive? :alive)))))
 
-(deftest neighbours-first-test
-  (testing "The first cell should return 3 items"
-    (is (= [1 3 4] (neighbours 0 [0 1 2 3 4 5 6 7 8])))))
+(deftest dead-alive?-test
+  (testing "A dead cell should return false"
+    (is (= false (alive? :dead)))))
 
-(deftest neighbours-last-test
-  (testing "The last cell should return 3 items"
-    (is (= [4 5 7] (neighbours 8 [0 1 2 3 4 5 6 7 8])))))
+(deftest count-alive-test
+  (testing "A cell surrounded by alive cells should return 8"
+    (is (= 8 (count-alive [[:alive :alive :alive]
+                           [:alive :alive :alive]
+                           [:alive :alive :alive]])))))
 
-(deftest alive-test
-  (testing "Should return true for *"
-    (is (= true (alive? "*")))))
+(deftest middle-neighbours-test
+  (testing "Should return an 3x3 grid with the cell in the center"
+    (is (= [[:alive :alive :alive]
+            [:alive :dead :alive]
+            [:alive :alive :alive]] (neighbours  1 1 [[:alive :alive :alive :dead]
+                                                      [:alive :dead :alive :dead]
+                                                      [:alive :alive :alive :dead]
+                                                      [:dead :dead :dead :dead]])))))
 
-(deftest dead-test
-  (testing "Should return false for ."
-    (is (= false (alive? ".")))))
+(deftest edge-neighbours-test
+  (testing "Should return an 3x3 grid with the cell in the center and nil for out of bound indices"
+    (is (= [[nil nil nil]
+            [nil :dead :alive]
+            [nil :alive :alive]] (neighbours  0 0 [[:dead :alive :dead :dead]
+                                                   [:alive :alive :dead :dead]
+                                                   [:dead :dead :dead :dead]
+                                                   [:dead :dead :dead :dead]])))))
 
-(deftest decide-stay-alive-test
-  (testing "A live cell with 2 neighbours stays alive"
-    (is (= "*" (decide "*" 2)))))
+(deftest construct-enhanced-grid-all-dead-test
+  (testing "Should return all 0s for an all dead grid"
+    (is (= [[[:dead 0] [:dead 0] [:dead 0]]
+            [[:dead 0] [:dead 0] [:dead 0]]
+            [[:dead 0] [:dead 0] [:dead 0]]] (construct-enhanced-grid [[:dead :dead :dead]
+                                                                       [:dead :dead :dead]
+                                                                       [:dead :dead :dead]])))))
 
-(deftest decide-come-alive-test
-  (testing "A dead cell with 3 neighbours comes alive"
-    (is (= "*" (decide "." 3)))))
+(deftest construct-enhanced-grid-test
+  (testing "Should return a correct pattern for a mixed grid"
+    (is (= [[[:dead 1] [:dead 1] [:dead 1]]
+            [[:dead 1] [:alive 0] [:dead 1]]
+            [[:dead 1] [:dead 1] [:dead 1]]] (construct-enhanced-grid [[:dead :dead :dead]
+                                                                       [:dead :alive :dead]
+                                                                       [:dead :dead :dead]])))))
 
-(deftest decide-die-test
-  (testing "A live cell with 1 neighbours dies"
-    (is (= "." (decide "*" 1)))))
+(deftest alive-one-alive-neighbour-decider-test
+  (testing "Should return dead if a live cell has less than 2 alive neighbours"
+    (is (= :dead (decider [:alive 1])))))
 
-(deftest itrate-dead-test
-  (testing "All dead cells stay dead"
-    (is (= ["." "." "." "." "." "." "." "." "."] (itrate ["." "." "." "." "." "." "." "." "."])))))
+(deftest alive-four-alive-neighbours-decider-test
+  (testing "Should return dead if a live cell has more than 3 alive neighbours"
+    (is (= :dead (decider [:alive 4])))))
 
-(deftest itrate-alive-test
-  (testing "All alive cells"
-    (is (= ["*" "." "*" "." "." "." "*" "." "*"] (itrate ["*" "*" "*" "*" "*" "*" "*" "*" "*"])))))
+(deftest dead-three-alive-neighbours-decider-test
+  (testing "Should return alive if a dead cell has exactly 3 alive neighbours"
+    (is (= :alive (decider [:dead 3])))))
+
+(deftest alive-three-alive-neighbours-decider-test
+  (testing "Should return alive if a live cell has exactly 3 alive neighbours"
+    (is (= :alive (decider [:alive 3])))))
+
+(deftest execute-cycle-test
+  (testing "Should correctly decide the next state based on the enhanced grid"
+    (is (= [[:dead :dead :dead]
+            [:dead :dead :dead]
+            [:dead :dead :dead]] (execute-cycle [[[:dead 1] [:dead 1] [:dead 1]]
+                                                 [[:dead 1] [:alive 0] [:dead 1]]
+                                                 [[:dead 1] [:dead 1] [:dead 1]]])))))
+
+(deftest advance-test
+  (testing "Should correctly perform one iteration of the game of life"
+    (is (= [[:dead :dead :dead]
+            [:dead :dead :dead]
+            [:dead :dead :dead]] (advance [[:dead :dead :dead]
+                                           [:dead :alive :dead]
+                                           [:dead :dead :dead]])))))

@@ -1,47 +1,57 @@
 (ns game-of-life.core
   (:gen-class))
 
-(defn -main
-  "I don't do a whole lot ... yet."
-  [& args]
-  (println "Not ready yet."))
-
-(defn neighbours [i lst]
-  (let [size (count lst)
-        step (int (Math/sqrt size))
-        line-start (- i (mod i step))
-        line-end (+ line-start (dec step))]
-    (concat
-      (subvec lst
-              (max (- i (inc step)) (- line-start step) 0)
-              (max (min (- i (dec (dec step))) (- line-end (dec step))) 0))
-      (subvec lst
-              (max (dec i) line-start)
-              i)
-      (subvec lst
-              (inc i)
-              (min (inc (inc i)) (inc line-end)))
-      (subvec lst
-              (min (max (+ i (dec step)) (+ line-start step)) size)
-              (min (+ i (inc (inc step))) (+ line-end (inc step)) size)))))
-
-(defn alive? [x]
-  (if (= x "*")
+(defn alive? [cell]
+  (if (= cell :alive)
     true
     false))
 
-(defn decide [cell cnt]
-  (cond
-    (and (alive? cell) (< cnt 2)) "."
-    (and (alive? cell) (> cnt 3)) "."
-    (and (not (alive? cell)) (= cnt 3)) "*"
-    :else cell))
+(defn count-alive [[top [ml _ mr] bottom]]
+  (count
+    (concat
+      (filter alive? top)
+      (filter alive? [ml])
+      (filter alive? [mr])
+      (filter alive? bottom))))
 
-(defn itrate [lst]
-  (loop [x [] l lst cnt 0]
-    (if (empty? l)
-      x
-      (recur
-        (conj x (decide (first l) (count (filter alive? (neighbours cnt lst)))))
-        (rest l)
-        (inc cnt)))))
+(defn neighbours [x y grid]
+  (vec
+    (map vec
+      (partition 3
+        (for [i (map (partial + x) (range -1 2))
+              j (map (partial + y) (range -1 2))]
+          (get-in grid [i j] nil))))))
+
+(defn construct-enhanced-grid [grid]
+  (vec
+    (map vec
+      (partition 3
+        (for [i (range (count grid))
+              j (range (count grid))]
+          [(get-in grid [i j]) (count-alive (neighbours i j grid))])))))
+
+(defn decider [[previous-state alive-neighbours]]
+  (cond
+    (and (alive? previous-state) (< alive-neighbours 2)) :dead
+    (and (alive? previous-state) (> alive-neighbours 3)) :dead
+    (and (not (alive? previous-state)) (= alive-neighbours 3)) :alive
+    :else previous-state))
+
+(defn execute-cycle [enhanced-grid]
+  (map vec (map (partial map decider) enhanced-grid)))
+
+(defn advance [grid]
+  (vec (execute-cycle (construct-enhanced-grid grid))))
+
+(defn -main
+  "Game Of Life"
+  [& args]
+  ;; work around dangerous default behaviour in Clojure
+  (alter-var-root #'*read-eval* (constantly false))
+  (loop [grid [[:alive :alive :alive]
+               [:alive :dead :alive]
+               [:alive :alive :alive]]]
+    (do
+      (Thread/sleep 1000)
+      (println grid))
+    (recur (advance grid))))
