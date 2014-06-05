@@ -49,9 +49,12 @@
   ;; work around dangerous default behaviour in Clojure
   (alter-var-root #'*read-eval* (constantly false))
   (loop [grid [[:alive :alive :alive]
-               [:alive :dead :alive]
+               [:alive :alive :alive]
                [:alive :alive :alive]]]
     (do
       (Thread/sleep 1000)
-      (println grid))
+      (println (grid 0))
+      (println (grid 1))
+      (println (grid 2))
+      (println))
     (recur (advance grid))))
