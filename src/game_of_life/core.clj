@@ -53,8 +53,7 @@
                [:alive :alive :alive]]]
     (do
       (Thread/sleep 1000)
-      (println (grid 0))
-      (println (grid 1))
-      (println (grid 2))
+      (doseq [line grid]
+        (println line))
       (println))
     (recur (advance grid))))
