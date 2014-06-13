@@ -48,12 +48,17 @@
   [& args]
   ;; work around dangerous default behaviour in Clojure
   (alter-var-root #'*read-eval* (constantly false))
-  (loop [grid [[:alive :alive :alive]
-               [:alive :alive :alive]
-               [:alive :alive :alive]]]
+
+  (let [initial-grid (try
+               (load-file (first args))
+                (catch java.io.FileNotFoundException e
+                  (println "First argument must be a valid file name")
+                  (System/exit -1)))]
+
+  (loop [grid initial-grid]
     (do
       (Thread/sleep 1000)
       (doseq [line grid]
         (println line))
       (println))
-    (recur (advance grid))))
+    (recur (advance grid)))))
