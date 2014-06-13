@@ -50,10 +50,10 @@
   (alter-var-root #'*read-eval* (constantly false))
 
   (let [initial-grid (try
-               (load-file (first args))
-                (catch java.io.FileNotFoundException e
-                  (println "First argument must be a valid file name")
-                  (System/exit -1)))]
+                       (load-file (first args))
+                       (catch java.io.FileNotFoundException e
+                         (println "First argument must be a valid file name")
+                         (System/exit -1)))]
 
   (loop [grid initial-grid]
     (do
