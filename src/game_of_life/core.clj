@@ -16,16 +16,20 @@
 
 (defn neighbours [x y grid]
   (vec
-    (map vec
-      (partition 3
+    (map
+      vec
+      (partition
+        3
         (for [i (map (partial + x) (range -1 2))
               j (map (partial + y) (range -1 2))]
           (get-in grid [i j] nil))))))
 
 (defn construct-enhanced-grid [grid]
   (vec
-    (map vec
-      (partition 3
+    (map
+      vec
+      (partition
+        3
         (for [i (range (count grid))
               j (range (count grid))]
           [(get-in grid [i j]) (count-alive (neighbours i j grid))])))))
@@ -49,16 +53,17 @@
   ;; work around dangerous default behaviour in Clojure
   (alter-var-root #'*read-eval* (constantly false))
 
-  (let [initial-grid (try
-                       (load-file (first args))
-                       (catch java.io.FileNotFoundException e
-                         (println "First argument must be a valid file name")
-                         (System/exit -1)))]
+  (let [initial-grid
+        (try
+          (load-file (first args))
+          (catch java.io.FileNotFoundException e
+            (println "First argument must be a valid file name")
+            (System/exit -1)))]
 
-  (loop [grid initial-grid]
-    (do
-      (Thread/sleep 1000)
-      (doseq [line grid]
-        (println line))
-      (println))
-    (recur (advance grid)))))
+    (loop [grid initial-grid]
+      (do
+        (Thread/sleep 1000)
+        (doseq [line grid]
+          (println line))
+        (println))
+      (recur (advance grid)))))
